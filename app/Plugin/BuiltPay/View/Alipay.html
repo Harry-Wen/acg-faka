@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>支付宝支付 - 知托付！</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/assets/static/jquery.min.js"></script>
+    <script src="/assets/static/layer/layer.js"></script>
+    <script src="/assets/static/jquery.qrcode.min.js"></script>
+    <script src="/assets/static/pay.js"></script>
+    <style type="text/css">
+        .hr-top {
+            margin-top: 20px;
+            border-top: 1px dashed #e5e5e5;
+            padding: 10px 0;
+            position: relative;
+        }
+
+        .mobile {
+            display: none;
+        }
+
+        .openAlipay {
+            display: inline-block;
+            padding: 6px 12px;
+            margin-bottom: 0;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 1.42857143;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            -ms-touch-action: manipulation;
+            touch-action: manipulation;
+            cursor: pointer;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            background-image: none;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            color: #fff;
+            background-color: #2e6da4;
+            border-color: #2e6da4;
+        }
+
+        .refresh {
+            display: inline-block;
+            padding: 6px 12px;
+            margin-bottom: 0;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 1.42857143;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            -ms-touch-action: manipulation;
+            touch-action: manipulation;
+            cursor: pointer;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            background-image: none;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            color: #fff;
+            background-color: #e757b7;
+            border-color: #e757b7;
+        }
+
+    </style>
+    <link href="#{PluginView('Css/pay.css')}" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<div class=" body">
+    <h1 class="mod-title">
+        <span class="ico_log ico-zfbsm" style="margin-left: 50px;"></span>
+    </h1>
+    <div class="mod-ct" style="margin-top: 2px;">
+        <div class="pc">
+            <div style="font-size: 32px;padding-top: 20px;">请支付 <b style="color: red;">¥
+                    #{sprintf("%.2f",$order.acg_amount)}</b> 元
+            </div>
+            <div class="hr-top"></div>
+
+            <div class="qrcode-img-wrapper" data-role="qrPayImgWrapper">
+                <div data-role="qrPayImg" class="qrcode-img-area">
+                    <div class="ui-loading qrcode-loading" data-role="qrPayImgLoading" style="display: none;">加载中</div>
+                    <div style="position: relative;display: inline-block;">
+                        <div style="margin: 5px;display: block;" id="qrcode"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div><span style="background: yellow;color: red;font-size: 16px;">支付时请填写金额 <b
+                            style="color: red;font-size: 24px;">#{sprintf("%.2f",$order.acg_amount)}</b> 元，否则不发卡！</span>
+            </div>
+        </div>
+
+
+        <div class="mobile hr-top">
+            <button type="button" class="openAlipay" onclick="goAlipay();">👉点击我呼起支付宝进行支付👈</button>
+        </div>
+
+        #{if $config.alipay_replenishment == 1}
+            <div class="hr-top refresh-view" style="display: none;">
+                <button type="button" class="refresh">👉付完款没反应点我立即到账👈</button>
+            </div>
+        #{/if}
+
+        <div class="footer">
+            <div>
+                <div class="tip ">
+                    <div style="margin-bottom: 10px;"><b style="font-size: 18px;">请在</b>
+                        <strong id="hour_show"><s id="h"></s>0时</strong>
+                        <strong id="minute_show"><s></s>0分</strong>
+                        <strong id="second_show"><s></s>0秒</strong>
+                        <b style="font-size: 18px;">完成支付!</b>
+                    </div>
+
+                    <div class="ico-scan"></div>
+                    <div class="tip-text">
+                        <p>打开支付宝扫一扫</p>
+                        <p>手机使用相册扫</p>
+                    </div>
+                </div>
+            </div>
+            <div class="detail" id="orderDetail">
+                <dl class="detail-ct" id="desc" style="display: none;">
+                    <dt>金额</dt>
+                    <dd>#{sprintf("%.2f",$order.acg_amount)}</dd>
+                    <dt>商户订单：</dt>
+                    <dd id="ordernum">#{$order.trade_no}</dd>
+                    <dt>创建时间：</dt>
+                    <dd>#{$order.create_time}</dd>
+                    <dt>状态</dt>
+                    <dd>等待支付</dd>
+                </dl>
+                <a href="javascript:void(0)" class="arrow" style="z-index: 999999"><i class="ico-arrow"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        let tradeNo = '#{$order.trade_no}';
+        // let qrcode = "alipays://platformapi/startapp?appId=09999988&actionType=toAccount&goBack=NO&amount=#{$order.acg_amount}&userId=#{$config.alipay_id}&memo=#{$order.trade_no}";
+        let qrcode = 'alipays://platformapi/startapp?appId=20000123&actionType=scan&biz_data={"s": "money","u": "#{$config.alipay_id}","a": "#{$order.acg_amount}","m":"#{$order.trade_no}"}';
+
+
+        $('#qrcode').qrcode({
+            render: "canvas",
+            width: 200,
+            height: 200,
+            text: qrcode
+        });
+
+        let goAlipay = () => {
+            window.location.href = qrcode;
+        }
+
+        function queryTimer(tradeNo, unpaid = null, paid = null, expired = null) {
+            let timer = 0;
+            let callback = () => {
+                $.post('/plugin/builtPay/api/query', {tradeNo: tradeNo}, res => {
+                    if (res.code != 200) {
+                        typeof expired === 'function' && expired(res);
+                        clearInterval(timer);
+                        return;
+                    }
+                    if (res.data.status == 0) {
+                        typeof unpaid === 'function' && unpaid(res.data);
+                    } else if (res.data.status == 1) {
+                        typeof paid === 'function' && paid(res.data);
+                        clearInterval(timer);
+                    }
+                });
+            }
+            callback();
+            timer = setInterval(() => {
+                callback();
+            }, 1000);
+        }
+
+        function expireTimer(orderCreateDate, channelOrderExpire, done = null) {
+            let timer = 0;
+            let callback = () => {
+                let date = orderCreateDate.substring(0, 19);
+                date = date.replace(/-/g, '/');
+                let timestamp = new Date(date).getTime() / 1000;
+                let now_timestamp = parseInt(new Date().getTime() / 1000);
+                let expire = (parseInt(timestamp) + parseInt(channelOrderExpire)) - now_timestamp;
+                var day = Math.floor(expire / (24 * 3600)); // Math.floor()向下取整
+                var hour = Math.floor((expire - day * 24 * 3600) / 3600);
+                var minute = Math.floor((expire - day * 24 * 3600 - hour * 3600) / 60);
+                var second = expire - day * 24 * 3600 - hour * 3600 - minute * 60;
+                let cc = {
+                    expire: expire,
+                    day: day,
+                    hour: hour,
+                    minute: minute,
+                    second: second
+                }
+                typeof done === 'function' && done(cc);
+                if (expire <= 0) {
+                    clearInterval(timer);
+                }
+            }
+            timer = setInterval(() => {
+                callback();
+            }, 1000);
+        }
+
+
+        if (!Pay.isPc()) {
+            $('.mobile').show();
+        }
+
+        queryTimer(tradeNo, null, res => {
+            layer.msg('支付成功');
+            setTimeout(() => {
+                window.location.href = "#{$order.return_url}";
+            }, 1000);
+        }, res => {
+            layer.msg('订单已过期');
+            setTimeout(() => {
+                window.location.href = "#{$order.return_url}";
+            }, 1000);
+        });
+
+        //计时器
+        expireTimer('#{$order.create_time}', 300, res => {
+            if (res.expire <= 280) {
+                $(".refresh-view").show(150);
+            }
+            $('#hour_show').html(res.hour + "时");
+            $('#minute_show').html(res.minute + "分");
+            $('#second_show').html(res.second + "秒");
+        });
+
+        $('.refresh').click(function () {
+            let layIndex = layer.load(1, {shade: [0.3, '#fff']});
+            $.get('/plugin/builtPay/api/refresh?tradeNo=' + tradeNo, res => {
+                layer.close(layIndex);
+                layer.msg(res.msg);
+            })
+        });
+
+
+        //点击小箭头事件
+        $('#orderDetail a').click(function () {
+            if ($('#orderDetail').hasClass('detail-open')) {
+                $('#orderDetail .detail-ct').slideUp(500, function () {
+                    $('#orderDetail').removeClass('detail-open');
+                });
+            } else {
+                $('#orderDetail .detail-ct').slideDown(500, function () {
+                    $('#orderDetail').addClass('detail-open');
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>

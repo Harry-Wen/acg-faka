@@ -1,0 +1,6 @@
+[2022-05-26 20:56:29]:/www/wwwroot/git/mm-acg-faka/kernel/Kernel.php:96<br>Method App\Controller\Install::null() does not exist
+[2022-05-26 21:00:19]:/www/wwwroot/git/mm-acg-faka/kernel/Kernel.php:96<br>Method App\Controller\Admin\Authentication::null() does not exist
+[2022-05-26 21:25:34]:/www/wwwroot/git/mm-acg-faka/kernel/Kernel.php:96<br>Method App\Controller\User\Authentication::null() does not exist
+[2022-05-26 21:25:56]:/www/wwwroot/git/mm-acg-faka/kernel/Kernel.php:96<br>Method App\Controller\User\Authentication::null() does not exist
+[2022-05-26 21:27:46]:/www/wwwroot/git/mm-acg-faka/kernel/Kernel.php:96<br>Method App\Controller\User\Authentication::null() does not exist
+[2022-05-26 23:36:44]:/www/wwwroot/git/mm-acg-faka/kernel/Kernel.php:96<br>Method App\Controller\Admin\Authentication::null() does not exist
