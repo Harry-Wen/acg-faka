@@ -1,0 +1,59 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Pay\ZPay\Impl;
+
+use App\Entity\PayEntity;
+use App\Pay\Base;
+use Kernel\Exception\JSONException;
+
+/**
+ * Class Pay
+ * @package App\Pay\Kvmpay\Impl
+ */
+class Pay extends Base implements \App\Pay\Pay
+{
+
+    public function millisecondWay(){
+        list($s1, $s2) = explode(' ', microtime());
+        return (float)sprintf('%.0f', (floatval($s1) + floatval($s2)) * 1000);
+    }
+
+    /**
+     * @return PayEntity
+     * @throws \Kernel\Exception\JSONException
+     */
+    public function trade(): PayEntity
+    {
+
+        if (!$this->config['url']) {
+            throw new JSONException("请配置Z支付请求地址");
+        }
+
+        if (!$this->config['pid']) {
+            throw new JSONException("请配置Z支付商户ID");
+        }
+
+        if (!$this->config['key']) {
+            throw new JSONException("请配置Z支付商户密钥");
+        }
+ 
+        $param = [
+            'mch_id' => $this->config['pid'],
+            'attach' => $this->tradeNo, //订单名称
+            'type' => 1,
+            'amount' => $this->amount,
+            'out_trade_no' => $this->tradeNo,
+            'notify_url' => $this->callbackUrl,
+            'return_url' => $this->returnUrl,
+            'timestamp' => $this->millisecondWay(),
+            'isHtml' => 0,
+        ];
+        $param['sign'] = Signature::sign($param['out_trade_no'],$param['attach'],$param['type'],$param['amount'],$param['timestamp'],$this->config['pid'],$this->config['key']);
+        $payEntity = new PayEntity();
+        $payEntity->setType(self::TYPE_SUBMIT);
+        $payEntity->setOption($param);
+        $payEntity->setUrl(trim($this->config['url'], "/") . "/submit.php");
+        return $payEntity;
+    }
+}
