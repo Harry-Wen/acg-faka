@@ -52,7 +52,7 @@ class Pay extends Base implements \App\Pay\Pay
             'notify_url' => $this->callbackUrl,
             'return_url' => $this->returnUrl,
             'timestamp' => $this->millisecondWay(),
-            'isHtml' => 0,
+            'isHtml' => 1,
         ];
         $param['sign'] = Signature::sign($param['out_trade_no'],$param['attach'],$param['type'],$param['amount'],$param['timestamp'],$this->config['pid'],$this->config['key']);
         try {
