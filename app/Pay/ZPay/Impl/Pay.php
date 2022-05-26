@@ -46,7 +46,7 @@ class Pay extends Base implements \App\Pay\Pay
         $param = [
             'mch_id' => $this->config['pid'],
             'attach' => $this->tradeNo, //订单名称
-            'type' => 1,
+            'type' => 0,
             'amount' => $this->amount,
             'out_trade_no' => $this->tradeNo,
             'notify_url' => $this->callbackUrl,
