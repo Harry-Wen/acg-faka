@@ -17,6 +17,8 @@ use Kernel\Exception\JSONException;
 class Pay extends Base implements \App\Pay\Pay
 {
 
+    private $pay_url = "https://pay.bvaas.net/payPage/pay.php?out_trade_no=";
+
     public function millisecondWay(){
         list($s1, $s2) = explode(' ', microtime());
         return (float)sprintf('%.0f', (floatval($s1) + floatval($s2)) * 1000);
@@ -52,7 +54,7 @@ class Pay extends Base implements \App\Pay\Pay
             'notify_url' => $this->callbackUrl,
             'return_url' => $this->returnUrl,
             'timestamp' => $this->millisecondWay(),
-            'isHtml' => 1,
+            'isHtml' => 0,
         ];
         $param['sign'] = Signature::sign($param['out_trade_no'],$param['attach'],$param['type'],$param['amount'],$param['timestamp'],$this->config['pid'],$this->config['key']);
         try {
@@ -68,7 +70,7 @@ class Pay extends Base implements \App\Pay\Pay
         if ($json['code'] != 200) {
             throw new JSONException((string)$json['msg']);
         }
-        $url = $json['data']['payUrl'];
+        $url = $this->pay_url.$json['data']['outTradeNo'];
         $payEntity = new PayEntity();
         $payEntity->setType(self::TYPE_REDIRECT);
         $payEntity->setUrl($url);
